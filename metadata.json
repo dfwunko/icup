@@ -2,5 +2,7 @@
   "name": "NovaVault — Minimal HTML & JS Game Hub",
   "description": "A minimal pitch-black unblocked HTML5 and JavaScript game runner, sandbox editor, and library.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

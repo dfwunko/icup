@@ -11,6 +11,7 @@ import { CodeEditor } from './components/CodeEditor';
 import { DirectEmbed } from './components/DirectEmbed';
 import { CloakModal } from './components/CloakModal';
 import { PanicOverlay } from './components/PanicOverlay';
+import { ScanModal } from './components/ScanModal';
 import { HtmlJsGame } from './types';
 import {
   Play,
@@ -20,13 +21,14 @@ import {
   Plus,
   Upload,
   Download,
-  RotateCcw,
   Search,
   Layers,
   Terminal,
-  FileCode,
-  Sparkles,
-  ExternalLink
+  Radar,
+  RefreshCw,
+  FolderSearch,
+  ExternalLink,
+  Sparkles
 } from 'lucide-react';
 
 const MinimalArcadeApp: React.FC = () => {
@@ -40,6 +42,10 @@ const MinimalArcadeApp: React.FC = () => {
     deleteGame,
     toggleFavorite,
     resetToDefaults,
+    setIsScanModalOpen,
+    runDirectoryScan,
+    isScanning,
+    scanReports
   } = useGame();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -61,6 +67,7 @@ const MinimalArcadeApp: React.FC = () => {
         searchQuery.trim() === '' ||
         g.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         g.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (g.entryUrl && g.entryUrl.toLowerCase().includes(searchQuery.toLowerCase())) ||
         g.tags.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()));
 
       const matchesTag = selectedTag === 'all' || g.tags.includes(selectedTag);
@@ -70,8 +77,10 @@ const MinimalArcadeApp: React.FC = () => {
   }, [games, searchQuery, selectedTag]);
 
   const handleOpenInEditor = (game: HtmlJsGame) => {
-    setEditorTargetGame(game);
-    setActiveTab('editor');
+    if (game.htmlCode) {
+      setEditorTargetGame(game);
+      setActiveTab('editor');
+    }
   };
 
   const handleNewGame = () => {
@@ -88,13 +97,16 @@ const MinimalArcadeApp: React.FC = () => {
         const parsed = JSON.parse(evt.target?.result as string);
         if (Array.isArray(parsed)) {
           parsed.forEach(g => {
-            if (g.title && g.htmlCode) {
+            if (g.title && (g.htmlCode || g.entryUrl)) {
               addGame({
                 title: g.title,
                 author: g.author || 'Imported',
                 description: g.description || 'Imported HTML/JS Game',
                 tags: g.tags || ['Imported'],
                 htmlCode: g.htmlCode,
+                entryUrl: g.entryUrl,
+                type: g.entryUrl ? 'entrypoint' : 'inline',
+                icon: g.icon || '🎮'
               });
             }
           });
@@ -174,7 +186,7 @@ const MinimalArcadeApp: React.FC = () => {
                 ))}
               </div>
 
-              {/* Search input & Library Management */}
+              {/* Search input, Scanner & Library Management */}
               <div className="flex items-center space-x-2">
                 <div className="relative">
                   <Search className="w-3.5 h-3.5 text-neutral-500 absolute left-2.5 top-1/2 -translate-y-1/2" />
@@ -182,10 +194,19 @@ const MinimalArcadeApp: React.FC = () => {
                     type="text"
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
-                    placeholder="Search games..."
-                    className="bg-neutral-950 border border-neutral-800 rounded px-2.5 pl-8 py-1 text-xs text-neutral-200 placeholder:text-neutral-600 focus:outline-none focus:border-neutral-600 w-44 sm:w-56"
+                    placeholder="Search games & paths..."
+                    className="bg-neutral-950 border border-neutral-800 rounded px-2.5 pl-8 py-1 text-xs text-neutral-200 placeholder:text-neutral-600 focus:outline-none focus:border-neutral-600 w-44 sm:w-56 font-mono"
                   />
                 </div>
+
+                <button
+                  onClick={() => setIsScanModalOpen(true)}
+                  className="flex items-center gap-1.5 px-2.5 py-1 bg-neutral-950 hover:bg-neutral-900 border border-neutral-800 text-neutral-300 hover:text-white rounded transition-colors cursor-pointer"
+                  title="Open Scanner & Entry Point Hub"
+                >
+                  <Radar className={`w-3 h-3 ${isScanning ? 'animate-spin' : ''}`} />
+                  <span className="hidden sm:inline">Scanner</span>
+                </button>
 
                 <label className="flex items-center gap-1 px-2.5 py-1 bg-neutral-950 hover:bg-neutral-900 border border-neutral-800 text-neutral-400 hover:text-white rounded transition-colors cursor-pointer">
                   <Upload className="w-3 h-3" />
@@ -208,17 +229,28 @@ const MinimalArcadeApp: React.FC = () => {
             {games.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 px-4 border border-neutral-900 rounded-2xl bg-neutral-950/30 text-center font-mono max-w-2xl mx-auto my-6">
                 <div className="w-12 h-12 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-center text-neutral-400 mb-4">
-                  <Code2 className="w-6 h-6" />
+                  <Radar className="w-6 h-6" />
                 </div>
-                <h3 className="text-base font-semibold text-neutral-200 mb-1">Library is Empty</h3>
+                <h3 className="text-base font-semibold text-neutral-200 mb-1">No Games in Library</h3>
                 <p className="text-neutral-500 text-xs max-w-md mb-6 leading-relaxed">
-                  No games are currently loaded. Create a new HTML/JS game, paste an embed code, or import a file to get started.
+                  Scan the filesystem for HTML5 entry points (like Scarwrit), build a new game in Code Studio, or paste an embed code.
                 </p>
 
                 <div className="flex flex-wrap items-center justify-center gap-3">
                   <button
-                    onClick={handleNewGame}
+                    onClick={() => {
+                      runDirectoryScan();
+                      setIsScanModalOpen(true);
+                    }}
                     className="flex items-center gap-2 px-4 py-2 bg-white text-black font-semibold text-xs rounded-lg hover:bg-neutral-200 transition-colors cursor-pointer"
+                  >
+                    <Radar className="w-3.5 h-3.5" />
+                    <span>Scan for Games</span>
+                  </button>
+
+                  <button
+                    onClick={handleNewGame}
+                    className="flex items-center gap-2 px-4 py-2 bg-neutral-900 text-neutral-200 border border-neutral-800 font-medium text-xs rounded-lg hover:bg-neutral-800 transition-colors cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Create HTML/JS Game</span>
@@ -229,14 +261,8 @@ const MinimalArcadeApp: React.FC = () => {
                     className="flex items-center gap-2 px-4 py-2 bg-neutral-900 text-neutral-200 border border-neutral-800 font-medium text-xs rounded-lg hover:bg-neutral-800 transition-colors cursor-pointer"
                   >
                     <Terminal className="w-3.5 h-3.5" />
-                    <span>Direct Embed / Scratchpad</span>
+                    <span>Direct Embed</span>
                   </button>
-
-                  <label className="flex items-center gap-2 px-4 py-2 bg-neutral-900 text-neutral-200 border border-neutral-800 font-medium text-xs rounded-lg hover:bg-neutral-800 transition-colors cursor-pointer">
-                    <Upload className="w-3.5 h-3.5" />
-                    <span>Import File</span>
-                    <input type="file" accept=".json,.html,.htm" onChange={handleImportJson} className="hidden" />
-                  </label>
                 </div>
               </div>
             ) : filteredGames.length === 0 ? (
@@ -244,7 +270,7 @@ const MinimalArcadeApp: React.FC = () => {
                 <p className="text-neutral-400 text-xs mb-3">No games found matching query.</p>
                 <button
                   onClick={() => { setSearchQuery(''); setSelectedTag('all'); }}
-                  className="px-3 py-1.5 bg-neutral-900 text-neutral-300 hover:text-white rounded text-xs"
+                  className="px-3 py-1.5 bg-neutral-900 text-neutral-300 hover:text-white rounded text-xs cursor-pointer"
                 >
                   Clear Filters
                 </button>
@@ -259,13 +285,23 @@ const MinimalArcadeApp: React.FC = () => {
                   >
                     <div>
                       <div className="flex items-start justify-between mb-2.5">
-                        <div>
-                          <h3 className="text-sm font-semibold text-neutral-100 group-hover:text-white transition-colors font-mono">
-                            {game.title}
-                          </h3>
-                          <span className="text-[11px] text-neutral-500 font-mono">
-                            by {game.author}
-                          </span>
+                        <div className="flex items-start space-x-2.5">
+                          <span className="text-2xl select-none">{game.icon || (game.type === 'entrypoint' ? '🚀' : '🎮')}</span>
+                          <div>
+                            <div className="flex items-center space-x-2">
+                              <h3 className="text-sm font-semibold text-neutral-100 group-hover:text-white transition-colors font-mono">
+                                {game.title}
+                              </h3>
+                              {game.type === 'entrypoint' && (
+                                <span className="px-1.5 py-0.5 rounded text-[9px] bg-neutral-900 text-neutral-400 border border-neutral-800 font-mono">
+                                  Entry Point
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-[11px] text-neutral-500 font-mono">
+                              by {game.author}
+                            </span>
+                          </div>
                         </div>
 
                         <button
@@ -284,6 +320,12 @@ const MinimalArcadeApp: React.FC = () => {
                       <p className="text-xs text-neutral-400 line-clamp-2 leading-relaxed mb-4">
                         {game.description}
                       </p>
+
+                      {game.entryUrl && (
+                        <div className="mb-3 px-2 py-1 rounded bg-black/60 border border-neutral-900 font-mono text-[10px] text-neutral-500 truncate">
+                          Target: <span className="text-neutral-300">{game.entryUrl}</span>
+                        </div>
+                      )}
                     </div>
 
                     <div className="pt-3 border-t border-neutral-900 flex items-center justify-between font-mono text-[11px]">
@@ -299,23 +341,25 @@ const MinimalArcadeApp: React.FC = () => {
                       </div>
 
                       <div className="flex items-center space-x-1">
-                        <button
-                          onClick={e => {
-                            e.stopPropagation();
-                            handleOpenInEditor(game);
-                          }}
-                          className="p-1.5 text-neutral-500 hover:text-neutral-200 transition-colors"
-                          title="Edit Code"
-                        >
-                          <Code2 className="w-3.5 h-3.5" />
-                        </button>
+                        {game.htmlCode && (
+                          <button
+                            onClick={e => {
+                              e.stopPropagation();
+                              handleOpenInEditor(game);
+                            }}
+                            className="p-1.5 text-neutral-500 hover:text-neutral-200 transition-colors cursor-pointer"
+                            title="Edit Code"
+                          >
+                            <Code2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
 
                         <button
                           onClick={e => {
                             e.stopPropagation();
                             deleteGame(game.id);
                           }}
-                          className="p-1.5 text-neutral-600 hover:text-red-400 transition-colors"
+                          className="p-1.5 text-neutral-600 hover:text-red-400 transition-colors cursor-pointer"
                           title="Delete Game"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -326,7 +370,7 @@ const MinimalArcadeApp: React.FC = () => {
                             e.stopPropagation();
                             playGame(game);
                           }}
-                          className="flex items-center gap-1 px-2.5 py-1 rounded bg-white text-black font-semibold text-[11px] hover:bg-neutral-200 transition-colors ml-1"
+                          className="flex items-center gap-1 px-2.5 py-1 rounded bg-white text-black font-semibold text-[11px] hover:bg-neutral-200 transition-colors ml-1 cursor-pointer"
                         >
                           <Play className="w-3 h-3 fill-current" /> Play
                         </button>
@@ -345,6 +389,13 @@ const MinimalArcadeApp: React.FC = () => {
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
           <span>NovaVault • Minimal Unblocked HTML5 & JavaScript Runner</span>
           <div className="flex items-center space-x-3 text-neutral-500">
+            <button
+              onClick={() => setIsScanModalOpen(true)}
+              className="hover:text-neutral-300 cursor-pointer"
+            >
+              Scanner Hub
+            </button>
+            <span>•</span>
             <button
               onClick={() => setIsCloakModalOpen(true)}
               className="hover:text-neutral-300 cursor-pointer"
@@ -367,6 +418,9 @@ const MinimalArcadeApp: React.FC = () => {
         isOpen={isCloakModalOpen}
         onClose={() => setIsCloakModalOpen(false)}
       />
+
+      {/* Scanner & Entry Point Modal */}
+      <ScanModal />
     </div>
   );
 };

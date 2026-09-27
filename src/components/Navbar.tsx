@@ -1,15 +1,15 @@
 import React from 'react';
 import { useGame } from '../context/GameContext';
 import {
-  Gamepad2,
   Code2,
   Play,
   Terminal,
   EyeOff,
   Shield,
   Layers,
-  Search,
-  Plus
+  Plus,
+  Radar,
+  Sparkles
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -22,10 +22,16 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({
   onOpenCloakModal,
   onNewGame,
-  searchQuery,
-  onSearchChange,
 }) => {
-  const { activeTab, setActiveTab, triggerPanic, activeGame, currentCloak } = useGame();
+  const {
+    activeTab,
+    setActiveTab,
+    triggerPanic,
+    activeGame,
+    setIsScanModalOpen,
+    scanReports,
+    isScanning
+  } = useGame();
 
   return (
     <header className="sticky top-0 z-30 w-full bg-black/90 backdrop-blur-md border-b border-neutral-800 px-4 md:px-8 py-3">
@@ -107,6 +113,19 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Action Controls */}
         <div className="flex items-center space-x-2">
+          {/* Scan for Games button */}
+          <button
+            onClick={() => setIsScanModalOpen(true)}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-neutral-300 hover:text-white text-xs font-mono transition-all cursor-pointer relative"
+            title="Scan for Games & Entry Points"
+          >
+            <Radar className={`w-3.5 h-3.5 ${isScanning ? 'animate-spin text-white' : 'text-neutral-400'}`} />
+            <span className="hidden sm:inline">Scan Games</span>
+            {scanReports.length > 0 && (
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            )}
+          </button>
+
           {/* New Game Button */}
           <button
             onClick={onNewGame}
