@@ -1,0 +1,6 @@
+{
+  "name": "NovaVault Unblocked Games Hub",
+  "description": "Premium unblocked HTML5 and JavaScript arcade with fast retro games, custom game maker, teacher stealth panic mode, leaderboards, and offline support.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
