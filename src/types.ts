@@ -1,43 +1,13 @@
-export type GameCategory = 'all' | 'action' | 'arcade' | 'retro' | 'puzzle' | 'runner' | 'idle' | 'sandbox';
-
-export interface GameMetadata {
+export interface HtmlJsGame {
   id: string;
   title: string;
-  category: 'action' | 'arcade' | 'retro' | 'puzzle' | 'runner' | 'idle' | 'sandbox';
   description: string;
-  tags: string[];
-  controls: { key: string; action: string }[];
-  accentColor: string;
-  badge?: string;
-  popular?: boolean;
-  featured?: boolean;
-}
-
-export interface CustomGame {
-  id: string;
-  title: string;
   author: string;
-  description: string;
+  tags: string[];
   htmlCode: string;
+  isFavorite?: boolean;
   createdAt: number;
   updatedAt: number;
-}
-
-export interface GameScoreRecord {
-  gameId: string;
-  score: number;
-  date: number;
-  rank?: string;
-}
-
-export interface Achievement {
-  id: string;
-  title: string;
-  description: string;
-  icon: string;
-  unlockedAt?: number;
-  progress?: number;
-  maxProgress?: number;
 }
 
 export interface CloakProfile {
@@ -45,6 +15,6 @@ export interface CloakProfile {
   name: string;
   tabTitle: string;
   favicon: string;
-  previewUrl: string;
+  previewDomain: string;
   disguiseType: 'classroom' | 'docs' | 'calculator' | 'canvas' | 'wikipedia';
 }
