@@ -205,7 +205,41 @@ const MinimalArcadeApp: React.FC = () => {
             </div>
 
             {/* Games Grid */}
-            {filteredGames.length === 0 ? (
+            {games.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 px-4 border border-neutral-900 rounded-2xl bg-neutral-950/30 text-center font-mono max-w-2xl mx-auto my-6">
+                <div className="w-12 h-12 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-center text-neutral-400 mb-4">
+                  <Code2 className="w-6 h-6" />
+                </div>
+                <h3 className="text-base font-semibold text-neutral-200 mb-1">Library is Empty</h3>
+                <p className="text-neutral-500 text-xs max-w-md mb-6 leading-relaxed">
+                  No games are currently loaded. Create a new HTML/JS game, paste an embed code, or import a file to get started.
+                </p>
+
+                <div className="flex flex-wrap items-center justify-center gap-3">
+                  <button
+                    onClick={handleNewGame}
+                    className="flex items-center gap-2 px-4 py-2 bg-white text-black font-semibold text-xs rounded-lg hover:bg-neutral-200 transition-colors cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Create HTML/JS Game</span>
+                  </button>
+
+                  <button
+                    onClick={() => setActiveTab('embed')}
+                    className="flex items-center gap-2 px-4 py-2 bg-neutral-900 text-neutral-200 border border-neutral-800 font-medium text-xs rounded-lg hover:bg-neutral-800 transition-colors cursor-pointer"
+                  >
+                    <Terminal className="w-3.5 h-3.5" />
+                    <span>Direct Embed / Scratchpad</span>
+                  </button>
+
+                  <label className="flex items-center gap-2 px-4 py-2 bg-neutral-900 text-neutral-200 border border-neutral-800 font-medium text-xs rounded-lg hover:bg-neutral-800 transition-colors cursor-pointer">
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Import File</span>
+                    <input type="file" accept=".json,.html,.htm" onChange={handleImportJson} className="hidden" />
+                  </label>
+                </div>
+              </div>
+            ) : filteredGames.length === 0 ? (
               <div className="text-center py-20 border border-neutral-900 rounded-2xl bg-neutral-950/40 p-8 font-mono">
                 <p className="text-neutral-400 text-xs mb-3">No games found matching query.</p>
                 <button
@@ -276,18 +310,16 @@ const MinimalArcadeApp: React.FC = () => {
                           <Code2 className="w-3.5 h-3.5" />
                         </button>
 
-                        {games.length > 1 && (
-                          <button
-                            onClick={e => {
-                              e.stopPropagation();
-                              deleteGame(game.id);
-                            }}
-                            className="p-1.5 text-neutral-600 hover:text-red-400 transition-colors"
-                            title="Delete Game"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        )}
+                        <button
+                          onClick={e => {
+                            e.stopPropagation();
+                            deleteGame(game.id);
+                          }}
+                          className="p-1.5 text-neutral-600 hover:text-red-400 transition-colors"
+                          title="Delete Game"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
 
                         <button
                           onClick={e => {

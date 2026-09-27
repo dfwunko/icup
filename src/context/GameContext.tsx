@@ -29,7 +29,7 @@ const GameContext = createContext<GameContextType | undefined>(undefined);
 export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [games, setGames] = useState<HtmlJsGame[]>(() => {
     try {
-      const saved = localStorage.getItem('novavault_minimal_games');
+      const saved = localStorage.getItem('novavault_clean_games');
       return saved ? JSON.parse(saved) : INITIAL_HTML_GAMES;
     } catch {
       return INITIAL_HTML_GAMES;
@@ -37,7 +37,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
 
   const [activeGame, setActiveGame] = useState<HtmlJsGame | null>(() => {
-    return games.length > 0 ? games[0] : null;
+    return null;
   });
 
   const [activeTab, setActiveTab] = useState<'library' | 'runner' | 'editor' | 'embed'>('library');
@@ -49,7 +49,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Persist games to local storage
   useEffect(() => {
     try {
-      localStorage.setItem('novavault_minimal_games', JSON.stringify(games));
+      localStorage.setItem('novavault_clean_games', JSON.stringify(games));
     } catch {}
   }, [games]);
 
